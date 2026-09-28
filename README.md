@@ -14,11 +14,14 @@ golden-rules
 # Windows
 winget install idrispwala-web.golden-rules
 golden-rules
+
+# Any Linux or macOS, no brew needed (installs to ~/.local/bin, then runs it)
+curl -fsSL https://raw.githubusercontent.com/idrispwala-web/golden-rules/main/install.sh | sh
 ```
 
 Restart Claude Code, then type `/golden-rules`.
 
-Preview first with `golden-rules --dry-run`. Re-running is safe: anything already installed is skipped.
+Preview first with `golden-rules --dry-run` (with the script: `... | sh -s -- --dry-run`). Re-running is safe: anything already installed is skipped.
 
 ## What it installs
 
