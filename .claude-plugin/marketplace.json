@@ -1,0 +1,11 @@
+{
+  "name": "golden-rules",
+  "owner": { "name": "idrispwala-web" },
+  "plugins": [
+    {
+      "name": "golden-rules",
+      "source": "./",
+      "description": "Team golden rules for Claude Code: Karpathy guidelines, verify-then-claim, git hygiene, graph-first retrieval"
+    }
+  ]
+}

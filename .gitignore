@@ -1,0 +1,4 @@
+dist/
+*.exe
+graphify-out/
+graft/

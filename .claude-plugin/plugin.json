@@ -1,0 +1,7 @@
+{
+  "name": "golden-rules",
+  "description": "Team golden rules for Claude Code: Karpathy guidelines, verify-then-claim, git hygiene, graph-first retrieval",
+  "author": { "name": "Idris Presswala" },
+  "repository": "https://github.com/idrispwala-web/golden-rules",
+  "license": "MIT"
+}

@@ -1,0 +1,50 @@
+version: 2
+project_name: golden-rules
+
+builds:
+  - env: [CGO_ENABLED=0]
+    goos: [windows, darwin, linux]
+    goarch: [amd64, arm64]
+    ldflags: ["-s -w -X main.version={{.Version}}"]
+
+archives:
+  - formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+homebrew_casks:
+  - name: golden-rules
+    homepage: https://github.com/idrispwala-web/golden-rules
+    description: Install the /golden-rules skill and its plugins for Claude Code
+    license: MIT
+    repository:
+      owner: idrispwala-web
+      name: homebrew-tap
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/golden-rules"]
+          end
+
+winget:
+  - name: golden-rules
+    publisher: idrispwala-web
+    package_identifier: idrispwala-web.golden-rules
+    short_description: Install the /golden-rules skill and its plugins for Claude Code
+    license: MIT
+    homepage: https://github.com/idrispwala-web/golden-rules
+    publisher_url: https://github.com/idrispwala-web
+    repository:
+      owner: idrispwala-web
+      name: winget-pkgs
+      branch: "golden-rules-{{.Version}}"
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+      pull_request:
+        enabled: true
+        base:
+          owner: microsoft
+          name: winget-pkgs
+          branch: master
