@@ -33,8 +33,9 @@ var plugins = []plugin{
 const agentBrowserSkill = "https://raw.githubusercontent.com/vercel-labs/agent-browser/main/skills/agent-browser/SKILL.md"
 
 var (
-	dryRun bool
-	failed []string
+	dryRun  bool
+	failed  []string
+	skipped []string
 )
 
 func main() {
@@ -100,6 +101,9 @@ func main() {
 
 	graphify()
 
+	if len(skipped) > 0 {
+		fmt.Printf("\nskipped (missing prerequisite): %v\ninstall them and re-run golden-rules (safe to repeat)\n", skipped)
+	}
 	if len(failed) > 0 {
 		fmt.Printf("\nfailed: %v\nfix the lines above and re-run golden-rules (safe to repeat)\n", failed)
 		os.Exit(1)
@@ -109,20 +113,24 @@ func main() {
 
 // graphify ships as a Python package; its own `graphify install` copies the skill.
 func graphify() {
-	if _, err := exec.LookPath("graphify"); err != nil {
-		step("graphify CLI", func() error {
-			switch {
-			case has("uv"):
-				return run("uv", "tool", "install", "graphifyy")
-			case has("pipx"):
-				return run("pipx", "install", "graphifyy")
-			case has("python3"):
-				return run("python3", "-m", "pip", "install", "--user", "graphifyy")
-			case has("python"):
-				return run("python", "-m", "pip", "install", "--user", "graphifyy")
-			}
-			return fmt.Errorf("needs uv, pipx or Python 3 (https://docs.astral.sh/uv)")
-		})
+	if !has("graphify") {
+		var cmd []string
+		switch {
+		case has("uv"):
+			cmd = []string{"uv", "tool", "install", "graphifyy"}
+		case has("pipx"):
+			cmd = []string{"pipx", "install", "graphifyy"}
+		case has("python3"):
+			cmd = []string{"python3", "-m", "pip", "install", "--user", "graphifyy"}
+		case has("python"):
+			cmd = []string{"python", "-m", "pip", "install", "--user", "graphifyy"}
+		default:
+			skip("graphify", "uv (https://docs.astral.sh/uv) or Python 3")
+			return
+		}
+		if !step("graphify CLI", func() error { return run(cmd[0], cmd[1:]...) }) {
+			return
+		}
 	}
 	platform := "claude"
 	if runtime.GOOS == "windows" {
@@ -171,9 +179,16 @@ func need(bin, hint string) bool {
 	if has(bin) {
 		return true
 	}
-	fmt.Fprintf(os.Stderr, "FAIL  %s not found, install %s and re-run\n", bin, hint)
-	failed = append(failed, bin)
+	skip(bin, hint)
 	return false
+}
+
+// skip records a step that cannot run because a prerequisite is missing.
+// Not a failure: the exit code stays 0 so a bare run on a clean machine
+// (winget's validator does exactly that) succeeds.
+func skip(name, hint string) {
+	fmt.Fprintf(os.Stderr, "SKIP  %s: install %s and re-run\n", name, hint)
+	skipped = append(skipped, name)
 }
 
 func has(bin string) bool {

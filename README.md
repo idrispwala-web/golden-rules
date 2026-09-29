@@ -15,6 +15,9 @@ golden-rules
 winget install idrispwala-web.golden-rules
 golden-rules
 
+# Windows without winget (PowerShell; installs to %LOCALAPPDATA%\Programs\golden-rules, then runs it)
+irm https://raw.githubusercontent.com/idrispwala-web/golden-rules/main/install.ps1 | iex
+
 # Any Linux or macOS, no brew needed (installs to ~/.local/bin, then runs it)
 curl -fsSL https://raw.githubusercontent.com/idrispwala-web/golden-rules/main/install.sh | sh
 ```
@@ -34,7 +37,7 @@ Preview first with `golden-rules --dry-run` (with the script: `... | sh -s -- --
 | agent-browser + its skill | `npm install -g agent-browser`, `agent-browser install`, skill from vercel-labs/agent-browser |
 | graphify + its skill | `uv tool install graphifyy` (or pipx / pip), then `graphify install` |
 
-Prerequisites: [Claude Code](https://claude.com/claude-code), [Node.js](https://nodejs.org), and [uv](https://docs.astral.sh/uv) or Python 3. The installer reports whatever is missing.
+Prerequisites: [Claude Code](https://claude.com/claude-code), [Node.js](https://nodejs.org), and [uv](https://docs.astral.sh/uv) or Python 3. Steps whose prerequisite is missing are skipped with a `SKIP` line naming what to install; re-run after installing it.
 
 ## Plugin-only install
 
