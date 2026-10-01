@@ -125,6 +125,17 @@ fi
 # Skill-only install (npx skills add), never the plugin: the plugin's hooks would
 # make caveman active in the main conversation, which we never want. Subagents
 # can still invoke the skill explicitly.
+# Its installer drops ~20 skills (caveman-commit, cavecrew, lean-build,
+# surgical-patch, ...). Every skill description is in context in every session,
+# and only `caveman` itself is used by the subagent protocol - so the rest are
+# pruned straight after install. Several of them also duplicate skills we
+# already install (lean-build vs incremental-implementation,
+# investigate-first vs debugging-and-error-recovery).
+CAVEMAN_EXTRAS="cavecrew caveman-commit caveman-compress caveman-discover \
+caveman-evidence-review caveman-explore caveman-help caveman-learn \
+caveman-manage caveman-optimize caveman-review caveman-setup caveman-stats \
+investigate-first lean-build migration safe-refactor surgical-patch \
+verify-and-stop"
 if [ -d "$CLAUDE_DIR/skills/caveman" ]; then
   skip "caveman skill already installed"
 elif have node; then
@@ -132,6 +143,18 @@ elif have node; then
   run "npx -y skills add JuliusBrussee/caveman -g"
 else
   skip "caveman (needs node)"
+fi
+pruned=0
+for extra in $CAVEMAN_EXTRAS; do
+  if [ -d "$CLAUDE_DIR/skills/$extra" ]; then
+    pruned=$((pruned + 1))
+    run "rm -rf '$CLAUDE_DIR/skills/$extra'"
+  fi
+done
+if [ "$pruned" -gt 0 ]; then
+  add "pruned $pruned extra caveman-pack skills (keeping only 'caveman')"
+else
+  skip "caveman pack already trimmed"
 fi
 
 # --------------------------------------------------------- 8. agent-skills (9)
