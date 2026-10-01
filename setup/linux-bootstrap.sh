@@ -125,12 +125,17 @@ fi
 # Skill-only install (npx skills add), never the plugin: the plugin's hooks would
 # make caveman active in the main conversation, which we never want. Subagents
 # can still invoke the skill explicitly.
-# Its installer drops ~20 skills (caveman-commit, cavecrew, lean-build,
-# surgical-patch, ...). Every skill description is in context in every session,
-# and only `caveman` itself is used by the subagent protocol - so the rest are
-# pruned straight after install. Several of them also duplicate skills we
-# already install (lean-build vs incremental-implementation,
-# investigate-first vs debugging-and-error-recovery).
+# `-s caveman` asks for the one skill we use; without it the installer offers
+# all ~20 (caveman-commit, cavecrew, lean-build, surgical-patch, ...), several
+# of which duplicate skills installed above.
+#
+# `-y -a claude-code` are REQUIRED, not cosmetic: without them the installer
+# opens an interactive picker, and over SSH (no TTY) it prints "Installation
+# cancelled", exits 0, and installs nothing. The agent id is `claude-code`;
+# `claude` is rejected as invalid.
+#
+# The prune below stays as a safety net for machines that already have the
+# full pack from an earlier install.
 CAVEMAN_EXTRAS="cavecrew caveman-commit caveman-compress caveman-discover \
 caveman-evidence-review caveman-explore caveman-help caveman-learn \
 caveman-manage caveman-optimize caveman-review caveman-setup caveman-stats \
@@ -140,7 +145,7 @@ if [ -d "$CLAUDE_DIR/skills/caveman" ]; then
   skip "caveman skill already installed"
 elif have node; then
   add "caveman skill (skill only, no plugin hooks)"
-  run "npx -y skills add JuliusBrussee/caveman -g"
+  run "npx -y skills add JuliusBrussee/caveman -g -y -a claude-code -s caveman"
 else
   skip "caveman (needs node)"
 fi
@@ -168,7 +173,7 @@ if have node; then
       skip "skill $s"
     else
       add "skill $s"
-      run "npx -y skills add addyosmani/agent-skills --skill '$s' -g"
+      run "npx -y skills add addyosmani/agent-skills -g -y -a claude-code -s '$s'"
     fi
   done
 else
