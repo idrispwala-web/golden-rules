@@ -89,3 +89,19 @@ MCP fragments read secrets from environment variables (`${DATABASE_URI}`,
 larger set of tools (superpowers, agent-browser, andrej-karpathy-skills). They
 are kept so existing installs keep working, but v2 does not use them and they
 are not maintained. Use the shell scripts above.
+
+## Verified on real machines (2026-10-01)
+
+Installed on WSL2 Ubuntu 26.04 and an Ubuntu 24.04 production VM. A `diff` of
+the two shows identical skills and agents. Doing that found five bugs a dry run
+never would have:
+
+| Bug | Symptom |
+|---|---|
+| WSL inherits the Windows PATH | `command -v graft` returned a Windows binary, so the Linux one was never installed |
+| `claude plugin install` rewrites `settings.json` | It dropped `autoCompactWindow`, written moments earlier. The settings merge now runs **last**. |
+| Plugin list parsed as text | Produced garbage and targeted claude.ai-synced plugins. Now uses `--json` and the `scope` field. |
+| graphify CLI checked, skill not | A wipe removes the skill but leaves the CLI, so the skill was never restored and machines diverged |
+| `npx skills add` without a TTY | Printed "Installation cancelled", **exited 0**, installed nothing — a silent failure that left the VM with 1 of 10 skills |
+
+The scripts now handle all five. `--dry-run` is worth using first anyway.
