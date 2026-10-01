@@ -206,13 +206,21 @@ npm_global() {   # npm_global <package> <binary>
 npm_global "@nanonets/graft" graft
 
 if have graphify; then
-  skip "graphify already installed"
+  skip "graphify CLI already installed"
 elif have uv; then
-  add "graphify (uv tool install graphifyy)"
+  add "graphify CLI (uv tool install graphifyy)"
   run "uv tool install graphifyy"
-  run "graphify install || true"
 else
   skip "graphify (needs uv)"
+fi
+# The skill is installed by `graphify install`, separately from the CLI. Check
+# it on its own: a wipe removes ~/.claude/skills/graphify while leaving the CLI
+# in place, and a CLI-only check would then silently never restore the skill.
+if [ -d "$CLAUDE_DIR/skills/graphify" ]; then
+  skip "graphify skill already installed"
+elif have graphify; then
+  add "graphify skill (graphify install)"
+  run "graphify install || true"
 fi
 
 # QMD indexes locally and is memory-hungry; on the VM only install it if there
