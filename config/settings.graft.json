@@ -1,0 +1,20 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [{ "type": "command", "command": "node \"$HOME/.claude/helpers/graft-hooks.cjs\" post-edit", "timeout": 10 }]
+      },
+      {
+        "matcher": "Bash|mcp__graft__|Read|Grep|Glob",
+        "hooks": [{ "type": "command", "command": "node \"$HOME/.claude/helpers/graft-hooks.cjs\" tool-savings", "timeout": 8 }]
+      }
+    ],
+    "UserPromptSubmit": [
+      { "hooks": [{ "type": "command", "command": "node \"$HOME/.claude/helpers/graft-hooks.cjs\" prompt", "timeout": 15 }] }
+    ],
+    "Stop": [
+      { "hooks": [{ "type": "command", "command": "node \"$HOME/.claude/helpers/graft-hooks.cjs\" stop", "timeout": 8 }] }
+    ]
+  }
+}

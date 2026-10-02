@@ -263,5 +263,18 @@ else
 fi
 
 
+# graft's own installer writes hook timeouts in milliseconds (10000, 15000), but
+# Claude Code reads them as seconds, so a hung hook could block for hours. Only
+# merged where graft has installed its helper; re-run this after `graft init`.
+if [ -f "$CLAUDE_DIR/helpers/graft-hooks.cjs" ]; then
+  if jq -e --slurpfile t "$REPO/config/settings.graft.json" \
+       '. as $cur | ($cur * $t[0]) == $cur' "$CLAUDE_DIR/settings.json" >/dev/null 2>&1; then
+    skip "graft hooks already set, timeouts in seconds"
+  else
+    add "graft hooks with timeouts in seconds"
+    run "jq -s '.[0] * .[1]' '$CLAUDE_DIR/settings.json' '$REPO/config/settings.graft.json' > '$CLAUDE_DIR/settings.json.tmp' && mv '$CLAUDE_DIR/settings.json.tmp' '$CLAUDE_DIR/settings.json'"
+  fi
+fi
+
 echo
 ok "bootstrap finished. Restart Claude Code, then run: claude plugin list; claude mcp list"
