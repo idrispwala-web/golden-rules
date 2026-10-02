@@ -1,0 +1,23 @@
+{
+  "autoCompactWindow": 80,
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline.sh"
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "~/.claude/hooks/brain-pull.sh", "timeout": 30 }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          { "type": "command", "command": "~/.claude/hooks/brain-push.sh", "timeout": 60 }
+        ]
+      }
+    ]
+  }
+}

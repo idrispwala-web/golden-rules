@@ -1,61 +1,107 @@
 # golden-rules
 
-Our team's golden rules for Claude Code, packaged as a `/golden-rules` skill, plus a one-command installer for every plugin, CLI and skill the rules depend on.
+One lean Claude Code setup, installed the same way on every Linux machine I work
+on: my desktop (WSL2 Ubuntu) and my Azure VM.
 
-The installer is a plain Go binary. It runs local commands (`claude plugin`, `claude mcp`, `npm`, `pip`/`uv`) and never calls a model, so installing costs no AI credits.
+Three layers:
+
+| Layer | What it is | Installed by |
+|---|---|---|
+| **Global** | Rules, status line, brain-sync hooks, a small set of skills, agents and CLI tools. Identical on both machines. | `setup/linux-bootstrap.sh` |
+| **Project packs** | Extra rules and MCP servers a *kind* of project needs — data, n8n, frontend, agents. | `setup/project-init.sh` |
+| **On demand** | Everything else. Installed when there is a reason, never "just in case". | by hand |
 
 ## Install
 
 ```sh
-# macOS / Linux
-brew install --cask idrispwala-web/tap/golden-rules
-golden-rules
+git clone https://github.com/idrispwala-web/golden-rules ~/golden-rules
+cd ~/golden-rules && git checkout v2
 
-# Windows
-winget install idrispwala-web.golden-rules
-golden-rules
+# See what it would do first:
+./setup/linux-bootstrap.sh --role desktop --dry-run
 
-# Windows without winget (PowerShell; installs to %LOCALAPPDATA%\Programs\golden-rules, then runs it)
-irm https://raw.githubusercontent.com/idrispwala-web/golden-rules/main/install.ps1 | iex
-
-# Any Linux or macOS, no brew needed (installs to ~/.local/bin, then runs it)
-curl -fsSL https://raw.githubusercontent.com/idrispwala-web/golden-rules/main/install.sh | sh
+# Then really do it:
+./setup/linux-bootstrap.sh --role desktop     # or: --role vm
 ```
 
-Restart Claude Code, then type `/golden-rules`.
+Needs `claude`, `jq`, `git`, Node.js (via nvm) and `uv` already on the machine.
+Anything already installed is skipped, so re-running is safe and is how you
+update: `git pull && ./setup/linux-bootstrap.sh --role desktop`.
 
-Preview first with `golden-rules --dry-run` (with the script: `... | sh -s -- --dry-run`). Re-running is safe: anything already installed is skipped.
+### Starting from an old setup
 
-## What it installs
+```sh
+./setup/wipe-claude.sh --dry-run   # shows exactly what would go
+./setup/wipe-claude.sh             # backs up to ~/claude-backup-<date>/ first, then asks
+```
 
-| Item | How |
+It backs up `~/.claude` and `~/.claude.json`, **checks the backup**, and only
+then removes local plugins, user-scope MCP servers, local skills, agents,
+commands and the `hooks`/`statusLine` keys. It keeps your login and your session
+history, and it cannot touch anything synced from your claude.ai account — that
+lives in the account, so turn those off at claude.ai if you want them gone.
+
+## What the global layer installs
+
+| Item | What for |
 |---|---|
-| `/golden-rules` skill | written to `~/.claude/skills/golden-rules/SKILL.md` |
-| superpowers, caveman, ponytail, andrej-karpathy-skills plugins | `claude plugin marketplace add` + `claude plugin install` |
-| context7 MCP | `claude mcp add --scope user --transport http context7 https://mcp.context7.com/mcp` |
-| graft | `npm install -g @nanonets/graft` |
-| agent-browser + its skill | `npm install -g agent-browser`, `agent-browser install`, skill from vercel-labs/agent-browser |
-| graphify + its skill | `uv tool install graphifyy` (or pipx / pip), then `graphify install` |
+| `~/.claude/CLAUDE.md` | The always-on rules. Short on purpose — it is in context in every session. |
+| `golden-rules` skill | The longer procedures: graph routing, subagent protocol, browser rules, wrap-up. Loaded only when needed. |
+| status line | model, folder, git branch, and **context used %** — green, amber at 60, red at 80. |
+| `autoCompactWindow: 80` | Compaction starts at 80% instead of waiting for the wall. |
+| brain hooks | Pull the Obsidian vault at session start, commit and push it at session end. |
+| context7 MCP | Current library documentation. Skipped if your claude.ai account already provides it. |
+| Ponytail (level `full`) | Writing style. |
+| Caveman (**skill only**) | Terse mode for subagents. Installed without its plugin hooks so it is never active in the main conversation. |
+| 9 agent-skills | interview-me, doubt-driven-development, incremental-implementation, documentation-and-adrs, ci-cd-and-automation, shipping-and-launch, observability-and-instrumentation, debugging-and-error-recovery, source-driven-development |
+| 5 agency-agents | AI engineer, backend architect, devops automator, API tester, reality checker |
+| graft, graphify | Code maps. graft is deterministic and free; graphify costs tokens and runs at wrap-up. |
+| QMD | Local search. On the VM, only if it has 8 GB+ RAM. |
+| Playwright CLI | Browser automation. Desktop only. |
 
-Prerequisites: [Claude Code](https://claude.com/claude-code), [Node.js](https://nodejs.org), and [uv](https://docs.astral.sh/uv) or Python 3. Steps whose prerequisite is missing are skipped with a `SKIP` line naming what to install; re-run after installing it.
+## Project packs
 
-## Plugin-only install
-
-If you only want the rules and not the dependencies:
-
+```sh
+cd ~/projects/my-repo
+~/golden-rules/setup/project-init.sh              # base files only
+~/golden-rules/setup/project-init.sh data n8n     # base + packs
 ```
-/plugin marketplace add idrispwala-web/golden-rules
-/plugin install golden-rules@golden-rules
-```
 
-With this path the skill is namespaced as `/golden-rules:golden-rules`.
+Every project gets `.gitattributes` (`eol=lf`), a `CLAUDE.md` skeleton, a Docker
+parity checklist, and `graft/` + `graphify-out/` in `.gitignore`. Packs append
+their own section to `CLAUDE.md` and merge their MCP server into `.mcp.json`.
+Nothing is ever overwritten.
 
-## Releasing
+| Pack | Adds |
+|---|---|
+| `data` | Query speed budget (300 ms / 2 s), `EXPLAIN ANALYZE` rule, Postgres MCP in read-only mode |
+| `n8n` | n8n MCP; workflows live in the repo as JSON, not only in the UI |
+| `frontend` | Browser rules; dashboards inherit the data speed budget |
+| `agents` | `evals/` skeleton and the rule that no prompt, retrieval or chunking change ships until evals pass |
 
-1. Create the public repos `idrispwala-web/homebrew-tap` (empty) and a fork of `microsoft/winget-pkgs` under `idrispwala-web`.
-2. Add a repo secret `TAP_GITHUB_TOKEN`: a PAT with `repo` scope that can push to both repos.
-3. Tag and push: `git tag v0.1.0 && git push origin v0.1.0`.
+MCP fragments read secrets from environment variables (`${DATABASE_URI}`,
+`${N8N_API_KEY}`). No secret is ever written into a file in this repo.
 
-The release workflow builds binaries for Windows, macOS and Linux, pushes the cask to the tap, and opens a PR to `microsoft/winget-pkgs`. Winget availability waits on Microsoft's review of that PR, which usually takes a few days for a new package.
+## Legacy v1
 
-Edit the rules in `skills/golden-rules/SKILL.md`. The binary embeds that file.
+`main.go`, `install.sh`, `install.ps1`, `.goreleaser.yaml` and the
+`.claude-plugin/` manifests are **v1** — a Go binary that installed an older,
+larger set of tools (superpowers, agent-browser, andrej-karpathy-skills). They
+are kept so existing installs keep working, but v2 does not use them and they
+are not maintained. Use the shell scripts above.
+
+## Verified on real machines (2026-10-01)
+
+Installed on WSL2 Ubuntu 26.04 and an Ubuntu 24.04 production VM. A `diff` of
+the two shows identical skills and agents. Doing that found five bugs a dry run
+never would have:
+
+| Bug | Symptom |
+|---|---|
+| WSL inherits the Windows PATH | `command -v graft` returned a Windows binary, so the Linux one was never installed |
+| `claude plugin install` rewrites `settings.json` | It dropped `autoCompactWindow`, written moments earlier. The settings merge now runs **last**. |
+| Plugin list parsed as text | Produced garbage and targeted claude.ai-synced plugins. Now uses `--json` and the `scope` field. |
+| graphify CLI checked, skill not | A wipe removes the skill but leaves the CLI, so the skill was never restored and machines diverged |
+| `npx skills add` without a TTY | Printed "Installation cancelled", **exited 0**, installed nothing — a silent failure that left the VM with 1 of 10 skills |
+
+The scripts now handle all five. `--dry-run` is worth using first anyway.
