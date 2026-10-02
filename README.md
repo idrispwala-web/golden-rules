@@ -81,7 +81,10 @@ The wizard offers these and installs nothing you do not pick:
 - **[graft](https://www.npmjs.com/package/@nanonets/graft)** — a wiring map of your
   code. Deterministic, no model calls, free to run.
 - **[graphify](https://pypi.org/project/graphifyy/)** — a meaning-level graph.
-  Uses a model, so it runs at wrap-up rather than constantly.
+  Uses a model, so it runs at wrap-up rather than constantly. Its own
+  `graphify install` adds a graphify section to `CLAUDE.md`; running the wizard
+  again rewrites `CLAUDE.md` (old copy backed up) and that section goes away.
+  That is fine: the code-maps rules and the graphify skill still cover it.
 - **qmd** (with the vault) and **Playwright CLI** (with browser rules) — each
   only offered when you picked the rules that use it. Their skills are
   registered too, so Claude knows they exist.
