@@ -1,32 +1,16 @@
 #!/bin/sh
-# Installs the golden-rules binary to ~/.local/bin (or $INSTALL_DIR) and runs it.
+# Runs the golden-rules setup wizard (v2) straight from GitHub. Needs Node 18+.
 # Usage: curl -fsSL https://raw.githubusercontent.com/idrispwala-web/golden-rules/main/install.sh | sh
 set -eu
 
-repo=idrispwala-web/golden-rules
-dir=${INSTALL_DIR:-$HOME/.local/bin}
+command -v npx >/dev/null 2>&1 || { echo "golden-rules needs Node.js 18 or newer: https://nodejs.org" >&2; exit 1; }
 
-os=$(uname -s | tr '[:upper:]' '[:lower:]')
-case $(uname -m) in
-  x86_64|amd64) arch=amd64 ;;
-  aarch64|arm64) arch=arm64 ;;
-  *) echo "unsupported architecture: $(uname -m)" >&2; exit 1 ;;
-esac
+# npm 12 refuses git sources unless allowed; `root` allows only this package, not its dependencies.
+set -- -y --allow-git=root github:idrispwala-web/golden-rules "$@"
 
-tag=$(curl -fsSI "https://github.com/$repo/releases/latest" | sed -n 's|^[Ll]ocation:.*/tag/\(v[^[:space:]]*\).*|\1|p')
-[ -n "$tag" ] || { echo "could not find latest release" >&2; exit 1; }
-
-tmp=$(mktemp -d)
-trap 'rm -rf "$tmp"' EXIT
-curl -fsSL "https://github.com/$repo/releases/download/$tag/golden-rules_${tag#v}_${os}_${arch}.tar.gz" | tar -xz -C "$tmp"
-mkdir -p "$dir"
-mv "$tmp/golden-rules" "$dir/golden-rules"
-chmod +x "$dir/golden-rules"
-echo "installed golden-rules $tag to $dir"
-
-case ":$PATH:" in
-  *":$dir:"*) ;;
-  *) echo "add $dir to your PATH to run golden-rules again later" ;;
-esac
-
-"$dir/golden-rules" "$@"
+# Under `curl | sh` stdin is this script, so the wizard would see no terminal and
+# silently take every default. Read the answers from the terminal when there is one.
+if [ ! -t 0 ] && (exec </dev/tty) 2>/dev/null; then
+  exec npx "$@" </dev/tty
+fi
+exec npx "$@"
