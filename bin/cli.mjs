@@ -104,7 +104,7 @@ I.writeRules(templates, fragments);
 I.installRuntime(templates, "statusline.mjs");
 
 const settings = {
-  autoCompactWindow: 80,
+  autoCompactWindow: 200000,
   statusLine: { type: "command", command: `node "${join(claudeDir(), "statusline.mjs")}"` },
 };
 

@@ -247,7 +247,7 @@ fi
 # ------------------------------- 12. settings (merge, never clobber) - LAST
 # This runs last on purpose: `claude plugin install` rewrites settings.json
 # from Claude Code's own loaded config and silently drops any key added
-# before it (autoCompactWindow was lost this way).
+# before it (autoCompactWindow was lost this way, and again by /model saving a default).
 # The template's keys win; every other key already in settings.json is kept.
 if [ -f "$CLAUDE_DIR/settings.json" ]; then
   if jq -e --slurpfile t "$REPO/config/settings.template.json" \

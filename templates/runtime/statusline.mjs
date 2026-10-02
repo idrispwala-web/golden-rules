@@ -37,8 +37,13 @@ try {
   /* not a repo, or git is unavailable — the branch is simply omitted */
 }
 
-// used_percentage is null until the first API response of a session.
-const pct = session.context_window?.used_percentage;
+// Measure against the auto-compact window (settings "autoCompactWindow": 200000),
+// not the model's window: on a 1M model, used_percentage would only reach 20%
+// when compaction fires. Keep this number in step with that setting.
+const COMPACT_WINDOW = 200000;
+// Both fields are null until the first API response of a session.
+const used = session.context_window?.total_input_tokens;
+const pct = typeof used === "number" ? (used * 100) / COMPACT_WINDOW : session.context_window?.used_percentage;
 let ctx = "--% ctx";
 if (typeof pct === "number") {
   const n = Math.floor(pct);
