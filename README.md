@@ -20,12 +20,12 @@ irm https://raw.githubusercontent.com/idrispwala-web/golden-rules/main/install.p
 # Linux / macOS / WSL
 curl -fsSL https://raw.githubusercontent.com/idrispwala-web/golden-rules/main/install.sh | sh
 
-# Or directly, anywhere (npm 12 needs --allow-git=root for GitHub sources)
-npx -y --allow-git=root github:idrispwala-web/golden-rules
+# Or directly, anywhere (npm 12 needs --allow-git=all for GitHub sources)
+npx -y --allow-git=all github:idrispwala-web/golden-rules
 ```
 
 To pass the options under [Usage](#usage), use the last form and add them at
-the end, e.g. `npx -y --allow-git=root github:idrispwala-web/golden-rules --dry-run`.
+the end, e.g. `npx -y --allow-git=all github:idrispwala-web/golden-rules --dry-run`.
 
 Nothing is installed globally unless you say yes to it.
 
