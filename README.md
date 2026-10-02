@@ -70,6 +70,10 @@ follow you to another machine. Any Obsidian folder with a remote works;
 [obsidian-mind](https://github.com/breferrari/obsidian-mind) is one ready-made
 option if you are starting fresh.
 
+If qmd is installed, the wizard also adds the vault to qmd's `brain` index.
+Search by meaning needs one more step, `qmd --index brain embed`; add `--no-gpu`
+if your graphics card runs out of memory.
+
 The pull hook deliberately prints nothing. Claude Code adds `SessionStart`
 output straight into the model's context, so anything it printed would be paid
 for in every session you ever run.
