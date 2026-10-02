@@ -242,6 +242,22 @@ if [ "$ROLE" = "vm" ]; then
   skip "Playwright CLI (not installed on the VM by default)"
 else
   npm_global "@playwright/cli" playwright-cli
+  # The CLI ships its own skill inside the package, but installing the package
+  # does NOT register it. Without this copy the binary is present and Claude
+  # never knows it exists - the browser capability is silently half-installed.
+  # There is no `install --skills` flag; the path comes from `--help`.
+  if [ -d "$CLAUDE_DIR/skills/playwright-cli" ]; then
+    skip "playwright-cli skill already installed"
+  elif have playwright-cli; then
+    pw_skill=$(playwright-cli --help 2>&1 | grep -oE "/[^ ]*playwright-cli/SKILL.md" | head -1)
+    if [ -n "$pw_skill" ] && [ -f "$pw_skill" ]; then
+      add "playwright-cli skill"
+      run "mkdir -p '$CLAUDE_DIR/skills/playwright-cli'"
+      run "cp '$pw_skill' '$CLAUDE_DIR/skills/playwright-cli/SKILL.md'"
+    else
+      warn "playwright-cli skill not found in the package - browser work will not be discoverable"
+    fi
+  fi
 fi
 
 # ------------------------------- 12. settings (merge, never clobber) - LAST
