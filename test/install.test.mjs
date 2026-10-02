@@ -9,6 +9,7 @@ import * as I from "../lib/install.mjs";
 test("on Windows, commands go through a shell so .cmd shims like npm can start", () => {
   assert.deepEqual(spawnArgs("npm", ["root", "-g"], "win32"), ["npm root -g", [], { shell: true }]);
   assert.deepEqual(spawnArgs("npm", ["root", "-g"], "linux"), ["npm", ["root", "-g"], {}]);
+  assert.equal(spawnArgs("qmd", ["add", "C:\\Users\\Jane Doe\\brain"], "win32")[0], 'qmd add "C:\\Users\\Jane Doe\\brain"');
 });
 
 test("copySkill registers a skill shipped inside a package, and warns when it is missing", () => {

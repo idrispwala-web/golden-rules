@@ -181,6 +181,14 @@ if (!auto) {
   if (has("graphify") && !I.skillInstalled("graphify")) I.run("graphify", ["install"], "skill graphify");
   if (has("playwright-cli") && !I.skillInstalled("playwright-cli"))
     I.copySkill(join(I.capture("npm", ["root", "-g"]).trim(), "@playwright", "cli", "skills", "playwright-cli", "SKILL.md"), "playwright-cli");
+  // qmd finds nothing until the vault is added to its index.
+  const vault = process.env.BRAIN_DIR || join(homedir(), "brain");
+  if (brain && has("qmd") && existsSync(join(vault, ".git")) &&
+      !/^brain \(qmd:/m.test(I.capture("qmd", ["--index", "brain", "collection", "list"]))) {
+    I.run("qmd", ["--index", "brain", "collection", "add", vault, "--name", "brain"], "qmd index of your vault");
+    ask.note("For search by meaning, run: qmd --index brain embed");
+    ask.note("Graphics card out of memory? Add --no-gpu, or set QMD_FORCE_CPU=1 for every new window.");
+  }
 }
 if (!has("gh")) I.warn("gh (GitHub CLI) not found - install it from https://cli.github.com, then run: gh auth login");
 
