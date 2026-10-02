@@ -245,12 +245,13 @@ else
   # The CLI ships its own skill inside the package, but installing the package
   # does NOT register it. Without this copy the binary is present and Claude
   # never knows it exists - the browser capability is silently half-installed.
-  # There is no `install --skills` flag; the path comes from `--help`.
+  # There is no `install --skills` flag. The skill sits at a fixed path inside
+  # the package; `--help` prints a relative path, so it cannot be used.
   if [ -d "$CLAUDE_DIR/skills/playwright-cli" ]; then
     skip "playwright-cli skill already installed"
   elif have playwright-cli; then
-    pw_skill=$(playwright-cli --help 2>&1 | grep -oE "/[^ ]*playwright-cli/SKILL.md" | head -1)
-    if [ -n "$pw_skill" ] && [ -f "$pw_skill" ]; then
+    pw_skill="$(npm root -g)/@playwright/cli/skills/playwright-cli/SKILL.md"
+    if [ -f "$pw_skill" ]; then
       add "playwright-cli skill"
       run "mkdir -p '$CLAUDE_DIR/skills/playwright-cli'"
       run "cp '$pw_skill' '$CLAUDE_DIR/skills/playwright-cli/SKILL.md'"
