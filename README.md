@@ -82,6 +82,16 @@ The wizard offers these and installs nothing you do not pick:
   code. Deterministic, no model calls, free to run.
 - **[graphify](https://pypi.org/project/graphifyy/)** — a meaning-level graph.
   Uses a model, so it runs at wrap-up rather than constantly.
+- **qmd** (with the vault) and **Playwright CLI** (with browser rules) — each
+  only offered when you picked the rules that use it. Their skills are
+  registered too, so Claude knows they exist.
+- **context7 MCP** (skipped if a claude.ai connector already provides it),
+  the **ponytail** plugin, the **caveman** skill (skill only, never its plugin),
+  nine skills from `addyosmani/agent-skills` and five agents from
+  `msitarzewski/agency-agents`.
+
+`gh` is never installed for you — it needs admin rights and a login — but the
+wizard warns if it is missing.
 
 The rule the skeleton ships with is: *a new tool earns its place by replacing
 something or fixing a measured problem.* Every skill, plugin and MCP server

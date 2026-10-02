@@ -6,11 +6,11 @@
 //   npx golden-rules --yes      accept every default, no questions
 //   npx golden-rules project    add the project files to the repo you are in
 import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { homedir } from "node:os";
 import { existsSync } from "node:fs";
 import * as ask from "../lib/ask.mjs";
-import { osName, has, claudeDir } from "../lib/detect.mjs";
+import { osName, has, claudeDir, localPlugins } from "../lib/detect.mjs";
 import * as I from "../lib/install.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -137,13 +137,52 @@ if (brain) {
 // 5. optional tools ----------------------------------------------------------
 ask.head("5. Optional tools");
 ask.note("None of these are required. Each one costs context in every session.");
+// Same picks as setup/linux-bootstrap.sh, so every OS can get the full setup.
+const AGENT_SKILLS = ["interview-me", "doubt-driven-development", "incremental-implementation",
+  "documentation-and-adrs", "ci-cd-and-automation", "shipping-and-launch",
+  "observability-and-instrumentation", "debugging-and-error-recovery", "source-driven-development"];
+const AGENTS = ["engineering/engineering-ai-engineer.md", "engineering/engineering-backend-architect.md",
+  "engineering/engineering-devops-automator.md", "testing/testing-api-tester.md", "testing/testing-reality-checker.md"];
+const skillsAdd = (repoName, skill) => () =>
+  I.run("npx", ["-y", "skills", "add", repoName, "-g", "-y", "-a", "claude-code", "-s", skill], `skill ${skill}`);
+
 const tools = [];
+const offer = async (question, fallback, ...steps) => {
+  if (await ask.confirm(question, fallback)) tools.push(...steps);
+};
+const npmGlobal = (pkg, label) => () => I.run("npm", ["install", "-g", pkg], label);
 if (!auto) {
-  if (codemaps && !has("graft") && (await ask.confirm("Install graft? (code wiring map, no model calls, free to run)", true))) tools.push(["npm", ["install", "-g", "@nanonets/graft"], "graft"]);
-  if (codemaps && !has("graphify") && has("uv") && (await ask.confirm("Install graphify? (meaning-level code graph, uses a model)", false))) tools.push(["uv", ["tool", "install", "graphifyy"], "graphify"]);
+  if (codemaps && !has("graft")) await offer("Install graft? (code wiring map, no model calls, free to run)", true, npmGlobal("@nanonets/graft", "graft"));
+  if (codemaps && !has("graphify") && has("uv")) await offer("Install graphify? (meaning-level code graph, uses a model)", false, () => I.run("uv", ["tool", "install", "graphifyy"], "graphify"));
+  if (brain && !has("qmd")) await offer("Install qmd? (fast search over your vault)", true, npmGlobal("@tobilu/qmd", "qmd"));
+  if (browser && !has("playwright-cli")) await offer("Install Playwright CLI? (the browser tool your browser rules point at)", true, npmGlobal("@playwright/cli", "playwright-cli"));
+  if (has("claude")) {
+    // Skip when a claude.ai connector already provides it: two copies means two sets of tools in every prompt.
+    if (!/context7/i.test(I.capture("claude", ["mcp", "list"]))) await offer("Add the context7 MCP? (current library docs)", true,
+      () => I.run("claude", ["mcp", "add", "--scope", "user", "--transport", "http", "context7", "https://mcp.context7.com/mcp"], "context7 MCP"));
+    if (!localPlugins().some((p) => p.id.startsWith("ponytail"))) await offer("Install the ponytail plugin? (pushes Claude to the smallest working code)", true,
+      () => I.run("claude", ["plugin", "marketplace", "add", "DietrichGebert/ponytail"], "ponytail marketplace"),
+      () => I.run("claude", ["plugin", "install", "ponytail@ponytail"], "ponytail plugin"));
+  }
+  // Skill only, never the caveman plugin: its hooks would switch caveman on in the main conversation.
+  if (!I.skillInstalled("caveman")) await offer("Install the caveman skill? (short reports from subagents)", true, skillsAdd("JuliusBrussee/caveman", "caveman"));
+  const missingSkills = AGENT_SKILLS.filter((s) => !I.skillInstalled(s));
+  if (missingSkills.length) await offer(`Install ${missingSkills.length} agent-skills? (debugging, shipping, ADRs, ...)`, true,
+    ...missingSkills.map((s) => skillsAdd("addyosmani/agent-skills", s)));
+  const missingAgents = AGENTS.filter((a) => !existsSync(join(claudeDir(), "agents", basename(a))));
+  if (missingAgents.length) await offer(`Install ${missingAgents.length} agents? (AI engineer, backend architect, DevOps, API tester, reality checker)`, true,
+    ...missingAgents.map((a) => () => I.download(`https://raw.githubusercontent.com/msitarzewski/agency-agents/main/${a}`, join(claudeDir(), "agents", basename(a)), `agent ${basename(a)}`)));
 }
-for (const [cmd, args, label] of tools) I.run(cmd, args, label);
+for (const step of tools) await step();
 if (!tools.length) I.skip("no optional tools selected");
+
+// A CLI on PATH is not enough: Claude only knows a tool exists once its skill is registered.
+if (!auto) {
+  if (has("graphify") && !I.skillInstalled("graphify")) I.run("graphify", ["install"], "skill graphify");
+  if (has("playwright-cli") && !I.skillInstalled("playwright-cli"))
+    I.copySkill(join(I.capture("npm", ["root", "-g"]).trim(), "@playwright", "cli", "skills", "playwright-cli", "SKILL.md"), "playwright-cli");
+}
+if (!has("gh")) I.warn("gh (GitHub CLI) not found - install it from https://cli.github.com, then run: gh auth login");
 
 // ----------------------------------------------------------------------------
 ask.head("Done");
