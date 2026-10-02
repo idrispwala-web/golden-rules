@@ -122,3 +122,7 @@ One-time setup: on the package's npm settings page, add this repository and
 
 `release.yml` is the **legacy v1 Go binary** and is manual-only. It installs
 tools v2 deliberately does not, so it must never fire on a tag.
+
+Homebrew and winget are retired on purpose — see
+[docs/distribution.md](docs/distribution.md) for the reasoning and what it would
+cost to bring them back.
