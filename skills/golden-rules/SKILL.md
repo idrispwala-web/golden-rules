@@ -38,23 +38,20 @@ Use a subagent whenever a task means reading a lot and keeping little: log files
 web pages, large files, repo-wide sweeps. The subagent returns conclusions and
 the few facts asked for — never raw dumps, never whole files.
 
-**Every subagent prompt starts with these two lines, then the task:**
+**A subagent prompt is short:** the goal, where to look, what to return. When
+the repo has graft/ or graphify-out/, add this line:
 
 ```
-First invoke the caveman skill at level full and the ponytail skill at level full.
-Keep code, file paths, identifiers and error messages verbatim in English.
-```
-```
-If this repo has graft/ or graphify-out/, answer from the graphs first: graft for
-wiring questions, graphify for meaning questions. Grep only for what they miss.
+Answer from the graphs first: graft for wiring questions, graphify for meaning
+questions. Grep only for what they miss. Keep code, file paths, identifiers and
+error messages verbatim.
 ```
 
-Load the real skills — a paraphrase of them is not the same thing, and subagents
-get no session-start hook to do it for them.
-
-**Exception:** a subagent whose output goes straight to the user, or into a file
-that gets committed (documentation, a commit message, PR text), invokes ponytail
-only and writes normal prose. Caveman is never active in the main conversation.
+Do not make a small subagent load skills first: the skill text costs more
+tokens than compressing a short reply saves. Only a subagent expected to return
+a long report invokes caveman at level full (never wenyan: Chinese text costs
+more tokens and loses precision). Caveman is never active in the main
+conversation.
 
 **Model choice.** Match the model to the work, not to the importance of the task:
 
@@ -81,7 +78,9 @@ Skip this section entirely if the project has no vault.
 
 Before changing anything a project's `CLAUDE.md` lists under "Consult the vault
 before changing", search the vault and **name what you found** — or say
-"nothing recorded" — before writing code.
+"nothing recorded" — before writing code. Search with
+`qmd --index brain search "<words>"` (instant) or `qmd --index brain query
+"<topic>"`; om's `search` tool currently fails.
 
 - Record what happened in this project and why, as it happens.
 - Record a cross-project lesson only when it would genuinely help a *different*
@@ -92,11 +91,15 @@ Never put secrets or client personal data in the vault.
 
 ## 5. Finishing a session
 
-Watch the context percentage in the status line. At about **80%**:
+Watch the context percentage in the status line (measured against the 200k
+compact point). At about **80%**:
 
 1. Stop starting new work.
 2. Refresh the meaning-level code map if code changed and the repo has one.
 3. Record this session's decisions and lessons in the vault, if one is set up.
 4. Tell the user to `/clear`.
+
+`/om-wrap-up` does the vault part in depth, but it exists only when Claude runs
+inside `~/brain`. In a project, do the steps above instead.
 
 Finishing properly costs less than losing the thread to a compaction.

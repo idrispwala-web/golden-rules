@@ -30,8 +30,9 @@
 - One change per branch. Before changing code, state what must NOT change, and keep it unchanged.
 - Tests (and evals for RAG/agents) must pass before you call anything done. Production deploys only through CI.
 
-## Brain (om MCP)
+## Brain (~/brain, om MCP)
 - Before changing anything listed under "Consult the brain before changing" in a project's CLAUDE.md, search the brain and name the decisions you found (or "nothing recorded").
+- Search with `qmd --index brain search "<words>"` (instant) or `qmd --index brain query "<topic>"` (slower, by meaning). Do not use om's `search` tool: it fails with "results could not be scope-checked".
 - Record decisions and their reasons with `record_work`; cross-project lessons with `remember` (honest confidence).
 - Use `reason` only when I ask; it is expensive.
 - Never store secrets or client personal data in the brain.
@@ -43,12 +44,14 @@
 - Broad grep/glob sweeps come after the graphs.
 
 ## Context and sessions
-- Watch the status line. At about 80% context: stop starting new work, run /om-wrap-up, then tell me to /clear.
+- Watch the status line. It measures against the 200k compact point. At about 80%: stop starting new work, follow "Finishing a session" in the golden-rules skill, then tell me to /clear.
+- `/om-wrap-up` and the other `/om-*` commands exist only when Claude runs inside ~/brain.
+- If the working directory is under /mnt/c, warn me once: WSL work belongs in ~/projects.
 
 ## Subagents
 - Use subagents for heavy reading (logs, pages, large files). They return conclusions and the few facts asked for, never raw dumps.
-- Start every subagent prompt with: "First invoke the caveman skill at level full and the ponytail skill at level full. Keep code, file paths, identifiers and error messages verbatim in English."
-- Exception: a subagent whose output goes straight to me or into a committed file uses ponytail only and writes normal prose.
+- Keep subagent prompts short: the goal, where to look, and exactly what to return. Ask for code, file paths, identifiers and error messages verbatim.
+- Do not make small subagents load skills first; loading costs more than it saves. Caveman (level full, never wenyan) only for a subagent expected to return a long report.
 - Caveman is never active in the main conversation.
 
 ## Browser
