@@ -5,8 +5,9 @@ set -eu
 
 command -v npx >/dev/null 2>&1 || { echo "golden-rules needs Node.js 18 or newer: https://nodejs.org" >&2; exit 1; }
 
-# npm 12 refuses git sources unless allowed; `root` allows only this package, not its dependencies.
-set -- -y --allow-git=root github:idrispwala-web/golden-rules "$@"
+# npm 12 refuses git sources unless allowed. `all`, not `root`: npm 11 blocks even the
+# named package under `root`. Safe here because golden-rules has no dependencies.
+set -- -y --allow-git=all github:idrispwala-web/golden-rules "$@"
 
 # Under `curl | sh` stdin is this script, so the wizard would see no terminal and
 # silently take every default. Read the answers from the terminal when there is one.

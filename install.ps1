@@ -7,5 +7,6 @@ if (-not (Get-Command npx -ErrorAction SilentlyContinue)) {
     return  # not exit: under `iex` that would close the user's window
 }
 
-# npm 12 refuses git sources unless allowed; `root` allows only this package, not its dependencies.
-npx -y --allow-git=root github:idrispwala-web/golden-rules @args
+# npm 12 refuses git sources unless allowed. `all`, not `root`: npm 11 blocks even the
+# named package under `root`. Safe here because golden-rules has no dependencies.
+npx -y --allow-git=all github:idrispwala-web/golden-rules @args
