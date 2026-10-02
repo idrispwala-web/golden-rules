@@ -70,6 +70,17 @@ follow you to another machine. Any Obsidian folder with a remote works;
 [obsidian-mind](https://github.com/breferrari/obsidian-mind) is one ready-made
 option if you are starting fresh.
 
+The vault is always **your own repo**. The wizard never clones anything and
+never points at anyone else's notes; the hooks sync whatever repo sits in that
+folder. To set one up:
+
+1. Create a private GitHub repo (empty, or from a template like obsidian-mind).
+2. Clone it to `~/brain`, or anywhere you point `BRAIN_DIR` at.
+3. Run the wizard and say yes to the vault.
+
+Cloned it after running the wizard? The hooks still work. Run the wizard once
+more so qmd indexes the vault.
+
 If qmd is installed, the wizard also adds the vault to qmd's `brain` index.
 Search by meaning needs one more step, `qmd --index brain embed`; add `--no-gpu`
 if your graphics card runs out of memory.
