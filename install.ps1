@@ -1,25 +1,11 @@
-# Installs golden-rules.exe to %LOCALAPPDATA%\Programs\golden-rules (or $env:INSTALL_DIR), adds it to the user PATH, and runs it.
+# Runs the golden-rules setup wizard (v2) straight from GitHub. Needs Node 18+.
 # Usage: irm https://raw.githubusercontent.com/idrispwala-web/golden-rules/main/install.ps1 | iex
 $ErrorActionPreference = 'Stop'
-$ProgressPreference = 'SilentlyContinue'
 
-$repo = 'idrispwala-web/golden-rules'
-$dir = if ($env:INSTALL_DIR) { $env:INSTALL_DIR } else { Join-Path $env:LOCALAPPDATA 'Programs\golden-rules' }
-$arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'arm64' } else { 'amd64' }
-
-$tag = (Invoke-RestMethod "https://api.github.com/repos/$repo/releases/latest").tag_name
-$zip = Join-Path $env:TEMP "golden-rules-$tag.zip"
-Invoke-WebRequest "https://github.com/$repo/releases/download/$tag/golden-rules_$($tag.TrimStart('v'))_windows_$arch.zip" -OutFile $zip
-New-Item -ItemType Directory -Force -Path $dir | Out-Null
-Expand-Archive $zip -DestinationPath $dir -Force
-Remove-Item $zip
-Write-Host "installed golden-rules $tag to $dir"
-
-$userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
-if (($userPath -split ';') -notcontains $dir) {
-    [Environment]::SetEnvironmentVariable('Path', "$userPath;$dir", 'User')
-    Write-Host "added $dir to your user PATH (new terminals pick it up)"
+if (-not (Get-Command npx -ErrorAction SilentlyContinue)) {
+    Write-Host 'golden-rules needs Node.js 18 or newer: https://nodejs.org'
+    return  # not exit: under `iex` that would close the user's window
 }
-$env:Path = "$env:Path;$dir"
 
-& (Join-Path $dir 'golden-rules.exe') @args
+# npm 12 refuses git sources unless allowed; `root` allows only this package, not its dependencies.
+npx -y --allow-git=root github:idrispwala-web/golden-rules @args
