@@ -1,107 +1,107 @@
 # golden-rules
 
-One lean Claude Code setup, installed the same way on every Linux machine I work
-on: my desktop (WSL2 Ubuntu) and my Azure VM.
+A starting skeleton for a Claude Code setup.
 
-Three layers:
-
-| Layer | What it is | Installed by |
-|---|---|---|
-| **Global** | Rules, status line, brain-sync hooks, a small set of skills, agents and CLI tools. Identical on both machines. | `setup/linux-bootstrap.sh` |
-| **Project packs** | Extra rules and MCP servers a *kind* of project needs — data, n8n, frontend, agents. | `setup/project-init.sh` |
-| **On demand** | Everything else. Installed when there is a reason, never "just in case". | by hand |
-
-## Install
+Claude Code is better when it knows how you work. That usually means a
+`~/.claude/CLAUDE.md` you wrote once and never revisited, a status line you
+copied from somewhere, and per-project rules you keep retyping. This sets up
+all three, asks what actually applies to you, and stays out of the way.
 
 ```sh
-git clone https://github.com/idrispwala-web/golden-rules ~/golden-rules
-cd ~/golden-rules && git checkout v2
-
-# See what it would do first:
-./setup/linux-bootstrap.sh --role desktop --dry-run
-
-# Then really do it:
-./setup/linux-bootstrap.sh --role desktop     # or: --role vm
+npx golden-rules
 ```
 
-Needs `claude`, `jq`, `git`, Node.js (via nvm) and `uv` already on the machine.
-Anything already installed is skipped, so re-running is safe and is how you
-update: `git pull && ./setup/linux-bootstrap.sh --role desktop`.
+Nothing is installed globally unless you say yes to it.
 
-### Starting from an old setup
+## What you get
+
+| | |
+|---|---|
+| **Global rules** | `~/.claude/CLAUDE.md`, composed from the answers you give — not a fixed file |
+| **Status line** | model, folder, git branch, and **context used %** (green → amber at 60 → red at 80) |
+| **Auto-compact at 80%** | instead of waiting for the wall |
+| **Project files** | `CLAUDE.md` skeleton, `.gitattributes` with `eol=lf`, a container-parity checklist |
+| **Project packs** | extra rules + MCP config for `data`, `n8n`, `frontend`, `agents` projects |
+| **A skill** | the longer procedures: code maps vs grep, the subagent protocol, browser rules, wrap-up |
+| **Vault sync** *(optional)* | pulls your Obsidian vault at session start, commits and pushes at session end |
+
+## Why the rules are composed, not copied
+
+A rules file that mentions your production server is wrong for someone who has
+none. One that says "explain things simply" is wrong for someone who wants the
+opposite. So the wizard asks, and writes only the sections that apply:
+
+| Module | Adds |
+|---|---|
+| `brain` | vault rules + the two sync hooks |
+| `codemaps` | when to use a code map instead of grep |
+| `docker` | staging must equal production |
+| `browser` | headless, timeouts, cheap model, no raw page dumps |
+| `production` | strict "do not touch the live server" rules |
+
+Skip them all and you get a 40-line file with nothing in it you did not choose.
+
+## Usage
 
 ```sh
-./setup/wipe-claude.sh --dry-run   # shows exactly what would go
-./setup/wipe-claude.sh             # backs up to ~/claude-backup-<date>/ first, then asks
+npx golden-rules                      # interactive
+npx golden-rules --dry-run            # show what it would do, change nothing
+npx golden-rules --yes                # accept every default, no questions
+npx golden-rules --with=brain,docker  # pick modules without being asked
+
+cd ~/code/my-project
+npx golden-rules project              # base files for this repo
+npx golden-rules project data         # ...plus the data pack
 ```
 
-It backs up `~/.claude` and `~/.claude.json`, **checks the backup**, and only
-then removes local plugins, user-scope MCP servers, local skills, agents,
-commands and the `hooks`/`statusLine` keys. It keeps your login and your session
-history, and it cannot touch anything synced from your claude.ai account — that
-lives in the account, so turn those off at claude.ai if you want them gone.
+Everything is idempotent. Run it again any time — it only changes what changed,
+and tells you what it did. An existing `~/.claude/CLAUDE.md` is backed up before
+it is replaced, and keys in `settings.json` that aren't ours are left alone.
 
-## What the global layer installs
+## The vault, if you want one
 
-| Item | What for |
-|---|---|
-| `~/.claude/CLAUDE.md` | The always-on rules. Short on purpose — it is in context in every session. |
-| `golden-rules` skill | The longer procedures: graph routing, subagent protocol, browser rules, wrap-up. Loaded only when needed. |
-| status line | model, folder, git branch, and **context used %** — green, amber at 60, red at 80. |
-| `autoCompactWindow: 80` | Compaction starts at 80% instead of waiting for the wall. |
-| brain hooks | Pull the Obsidian vault at session start, commit and push it at session end. |
-| context7 MCP | Current library documentation. Skipped if your claude.ai account already provides it. |
-| Ponytail (level `full`) | Writing style. |
-| Caveman (**skill only**) | Terse mode for subagents. Installed without its plugin hooks so it is never active in the main conversation. |
-| 9 agent-skills | interview-me, doubt-driven-development, incremental-implementation, documentation-and-adrs, ci-cd-and-automation, shipping-and-launch, observability-and-instrumentation, debugging-and-error-recovery, source-driven-development |
-| 5 agency-agents | AI engineer, backend architect, devops automator, API tester, reality checker |
-| graft, graphify | Code maps. graft is deterministic and free; graphify costs tokens and runs at wrap-up. |
-| QMD | Local search. On the VM, only if it has 8 GB+ RAM. |
-| Playwright CLI | Browser automation. Desktop only. |
+Opt into the `brain` module and you get two hooks: one pulls your notes vault
+when a session starts, the other commits and pushes when it ends. Point
+`BRAIN_DIR` at any folder that is a git repo, or use `~/brain`.
 
-## Project packs
+In practice that means a **private GitHub repo holding an Obsidian vault**, so
+Claude reads your notes and writes back what it decided — and the same notes
+follow you to another machine. Any Obsidian folder with a remote works;
+[obsidian-mind](https://github.com/breferrari/obsidian-mind) is one ready-made
+option if you are starting fresh.
+
+The pull hook deliberately prints nothing. Claude Code adds `SessionStart`
+output straight into the model's context, so anything it printed would be paid
+for in every session you ever run.
+
+## Optional tools
+
+The wizard offers these and installs nothing you do not pick:
+
+- **[graft](https://www.npmjs.com/package/@nanonets/graft)** — a wiring map of your
+  code. Deterministic, no model calls, free to run.
+- **[graphify](https://pypi.org/project/graphifyy/)** — a meaning-level graph.
+  Uses a model, so it runs at wrap-up rather than constantly.
+
+The rule the skeleton ships with is: *a new tool earns its place by replacing
+something or fixing a measured problem.* Every skill, plugin and MCP server
+costs tokens in **every session, forever** — so the default is lean on purpose.
+
+## Requirements
+
+Node 18+. Claude Code, obviously — though the files write fine without it.
+
+**Tested on Linux and WSL2.** Windows support is written and the code paths are
+cross-platform (no bash, no `flock`), but it has had less real-world use —
+reports welcome. macOS is untested; it should work, and I would rather say that
+than claim it.
+
+## Development
 
 ```sh
-cd ~/projects/my-repo
-~/golden-rules/setup/project-init.sh              # base files only
-~/golden-rules/setup/project-init.sh data n8n     # base + packs
+npm test        # 8 tests, no network, each in a temp directory
 ```
 
-Every project gets `.gitattributes` (`eol=lf`), a `CLAUDE.md` skeleton, a Docker
-parity checklist, and `graft/` + `graphify-out/` in `.gitignore`. Packs append
-their own section to `CLAUDE.md` and merge their MCP server into `.mcp.json`.
-Nothing is ever overwritten.
+## Licence
 
-| Pack | Adds |
-|---|---|
-| `data` | Query speed budget (300 ms / 2 s), `EXPLAIN ANALYZE` rule, Postgres MCP in read-only mode |
-| `n8n` | n8n MCP; workflows live in the repo as JSON, not only in the UI |
-| `frontend` | Browser rules; dashboards inherit the data speed budget |
-| `agents` | `evals/` skeleton and the rule that no prompt, retrieval or chunking change ships until evals pass |
-
-MCP fragments read secrets from environment variables (`${DATABASE_URI}`,
-`${N8N_API_KEY}`). No secret is ever written into a file in this repo.
-
-## Legacy v1
-
-`main.go`, `install.sh`, `install.ps1`, `.goreleaser.yaml` and the
-`.claude-plugin/` manifests are **v1** — a Go binary that installed an older,
-larger set of tools (superpowers, agent-browser, andrej-karpathy-skills). They
-are kept so existing installs keep working, but v2 does not use them and they
-are not maintained. Use the shell scripts above.
-
-## Verified on real machines (2026-10-01)
-
-Installed on WSL2 Ubuntu 26.04 and an Ubuntu 24.04 production VM. A `diff` of
-the two shows identical skills and agents. Doing that found five bugs a dry run
-never would have:
-
-| Bug | Symptom |
-|---|---|
-| WSL inherits the Windows PATH | `command -v graft` returned a Windows binary, so the Linux one was never installed |
-| `claude plugin install` rewrites `settings.json` | It dropped `autoCompactWindow`, written moments earlier. The settings merge now runs **last**. |
-| Plugin list parsed as text | Produced garbage and targeted claude.ai-synced plugins. Now uses `--json` and the `scope` field. |
-| graphify CLI checked, skill not | A wipe removes the skill but leaves the CLI, so the skill was never restored and machines diverged |
-| `npx skills add` without a TTY | Printed "Installation cancelled", **exited 0**, installed nothing — a silent failure that left the VM with 1 of 10 skills |
-
-The scripts now handle all five. `--dry-run` is worth using first anyway.
+MIT.
