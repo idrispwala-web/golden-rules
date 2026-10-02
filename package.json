@@ -1,0 +1,43 @@
+{
+  "name": "golden-rules",
+  "version": "2.0.0",
+  "description": "A starting skeleton for a Claude Code setup: composable global rules, a context-aware status line, project packs, and optional notes-vault sync.",
+  "keywords": [
+    "claude",
+    "claude-code",
+    "ai",
+    "agent",
+    "skills",
+    "setup",
+    "scaffold"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "golden-rules": "bin/cli.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "templates/",
+    "packs/",
+    "skills/",
+    "README.md",
+    "LICENSE"
+  ],
+  "os": [
+    "linux",
+    "darwin",
+    "win32"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/idrispwala-web/golden-rules.git"
+  },
+  "scripts": {
+    "test": "node --test"
+  }
+}
