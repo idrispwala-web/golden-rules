@@ -11,6 +11,22 @@ all three, asks what actually applies to you, and stays out of the way.
 npx golden-rules
 ```
 
+Not on npm yet? Run it straight from GitHub (Node 18+):
+
+```sh
+# Windows (PowerShell)
+irm https://raw.githubusercontent.com/idrispwala-web/golden-rules/main/install.ps1 | iex
+
+# Linux / macOS / WSL
+curl -fsSL https://raw.githubusercontent.com/idrispwala-web/golden-rules/main/install.sh | sh
+
+# Or directly, anywhere (npm 12 needs --allow-git=root for GitHub sources)
+npx -y --allow-git=root github:idrispwala-web/golden-rules
+```
+
+To pass the options under [Usage](#usage), use the last form and add them at
+the end, e.g. `npx -y --allow-git=root github:idrispwala-web/golden-rules --dry-run`.
+
 Nothing is installed globally unless you say yes to it.
 
 ## What you get
