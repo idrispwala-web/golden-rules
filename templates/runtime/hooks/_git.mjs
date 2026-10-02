@@ -9,7 +9,9 @@ import { join, dirname } from "node:path";
 import { tmpdir, homedir } from "node:os";
 
 export const vault = () => process.env.BRAIN_DIR || join(homedir(), "brain");
-export const logFile = () => join(homedir(), ".claude", "brain-sync.log");
+// Respect CLAUDE_CONFIG_DIR like the installer does, so a sandboxed run never
+// writes into the real ~/.claude log.
+export const logFile = () => join(process.env.CLAUDE_CONFIG_DIR || join(homedir(), ".claude"), "brain-sync.log");
 
 export function log(line) {
   try {
