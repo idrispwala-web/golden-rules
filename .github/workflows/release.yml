@@ -1,7 +1,11 @@
-name: release
+name: release (legacy v1 Go binary)
+
+# MANUAL ONLY, on purpose. This builds the v1 Go installer, which installs
+# superpowers and agent-browser - tools v2 deliberately does not ship. A v* tag
+# must publish the npm package (npm-publish.yml), not this. Run it by hand only
+# if you intend to cut a v1 binary release.
 on:
-  push:
-    tags: ["v*"]
+  workflow_dispatch:
 permissions:
   contents: write
 jobs:

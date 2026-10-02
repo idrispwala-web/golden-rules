@@ -105,3 +105,20 @@ npm test        # 8 tests, no network, each in a temp directory
 ## Licence
 
 MIT.
+
+## Releasing (maintainers)
+
+```sh
+npm version patch     # or minor / major - updates package.json and tags
+git push --follow-tags
+```
+
+The `v*` tag triggers `.github/workflows/npm-publish.yml`, which runs the tests,
+refuses to publish if the tag and `package.json` disagree, and publishes with
+npm **trusted publishing** (OIDC) — there is no npm token stored anywhere.
+
+One-time setup: on the package's npm settings page, add this repository and
+`npm-publish.yml` as a trusted publisher.
+
+`release.yml` is the **legacy v1 Go binary** and is manual-only. It installs
+tools v2 deliberately does not, so it must never fire on a tag.
