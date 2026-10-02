@@ -51,7 +51,7 @@ test("modules decide which sections exist", () => {
 
   const settings = JSON.parse(readFileSync(join(cfg, "settings.json"), "utf8"));
   assert.deepEqual(Object.keys(settings.hooks), ["SessionStart", "SessionEnd"]);
-  assert.equal(settings.autoCompactWindow, 80);
+  assert.equal(settings.autoCompactWindow, 200000);
   rmSync(box, { recursive: true, force: true });
 });
 
@@ -88,7 +88,7 @@ test("settings.json keeps keys we do not own", () => {
   const settings = JSON.parse(readFileSync(join(cfg, "settings.json"), "utf8"));
   assert.equal(settings.theme, "dark", "an unrelated key must survive");
   assert.equal(settings.tui, "fullscreen");
-  assert.equal(settings.autoCompactWindow, 80);
+  assert.equal(settings.autoCompactWindow, 200000);
   rmSync(box, { recursive: true, force: true });
 });
 
@@ -102,4 +102,21 @@ test("the status line survives malformed input", () => {
     encoding: "utf8",
   });
   assert.match(out, /ctx/, "it must still print a line");
+});
+
+test("the status line measures context against the 200k compact window, not the model window", () => {
+  // 160k tokens on a 1M model is 16% of the model window, but 80% of the compact window.
+  const out = execFileSync(process.execPath, [join(repo, "templates", "runtime", "statusline.mjs")], {
+    input: JSON.stringify({ context_window: { total_input_tokens: 160000, context_window_size: 1000000, used_percentage: 16 } }),
+    encoding: "utf8",
+  });
+  assert.match(out, /80% ctx/);
+});
+
+test("the shell status line agrees with the node one", () => {
+  const out = execFileSync("bash", [join(repo, "config", "statusline.sh")], {
+    input: JSON.stringify({ context_window: { total_input_tokens: 160000, context_window_size: 1000000, used_percentage: 16 } }),
+    encoding: "utf8",
+  });
+  assert.match(out, /80% ctx/);
 });
